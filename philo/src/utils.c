@@ -6,81 +6,86 @@
 /*   By: mmazzocc <mmazzocc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/07 11:04:21 by mmazzocc          #+#    #+#             */
-/*   Updated: 2023/03/07 12:07:21 by mmazzocc         ###   ########.fr       */
+/*   Updated: 2023/03/10 00:54:08 by mmazzocc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../inc/philo.h"
 
-int	alloc(t_struct *saves)
-{
-	saves->tid = malloc(sizeof(pthread_t) * saves->philo_num);
-	if (!saves->tid)
-		return (error("Failed to allocate the ID's thread! Error!", saves));
-	saves->forks = malloc(sizeof(pthread_mutex_t) * saves->philo_num);
-	if (!saves->forks)
-		return (error("Failed to allocate the forks's thread! Error!", saves));
-	saves->philos = malloc(sizeof(t_philo) * saves->philo_num);
-	if (!saves->philos)
-		return (error("Failed to allocate the philos's thread! Error!", saves));
-	return (0);
-}
-
-int	input_checker(char **argv)
+int	input_checker(int argc, char **argv)
 {
 	int	i;
 	int	j;
 
-	i = 1;
-	while (argv[i])
+	i = 0;
+	while (++i < argc)
 	{
 		j = 0;
 		while (argv[i][j])
 		{
-			if (argv[i][j] == ' ')
-			{
-				j++;
-				continue ;
-			}
-			if ((argv[i][j] < 48 || argv[i][j] > 57))
-				return (error("Invalid input! Error!", NULL));
+			if (!(argv[i][j] >= '0' && argv[i][j] <= '9'))
+				return (0);
 			j++;
 		}
-		i++;
 	}
-	return (0);
+	return (1);
 }
 
-int	ft_strcmp(char *s1, char *s2)
+int	ft_atoi(char *s)
 {
-	while (*s1 != '\0' && (*s1 == *s2))
+	int	value;
+	int	sign;
+
+	sign = 1;
+	value = 0;
+	while (*s == 32 || (*s >= 9 && *s <= 13))
+		s++;
+	if (*s == '-' || *s == '+')
 	{
-		s1++;
-		s2++;
+		if (*s == '-')
+			sign = -1;
+		s++;
 	}
-	return (*(char *)s1 - *(char *)s2);
+	while (*s >= '0' && *s <= '9')
+	{
+		value *= 10;
+		value += *s - 48;
+		s++;
+	}
+	return (value * sign);
 }
 
-long	ft_atoi(const char *str)
+t_struct	*init_all(int argc, char **argv)
 {
-	int	i;
-	int	is_neg;
-	long	res;
+	t_struct	*saves;
 
-	if (!str)
-		return (0);
-	i = 0;
-	while (str[i] == 9 || str[i] == 10 || str[i] == 11
-		|| str[i] == 12 || str[i] == 13 || str[i] == 20)
-		i++;
-	if (str[i] == '-')
-		is_neg = -1;
-	else
-		is_neg = 1;
-	if (is_neg == -1 || str[i] == '+')
-		i++;
-	res = 0;
-	while (str[i] >= '0' && str[i] <= '9')
-		res = (res * 10) + (str[i++] - '0');
-	return (res * is_neg);
+	if (argc < 5 || argc > 6 || !(ft_atoi(argv[1]) >= 1 && ft_atoi(argv[1]) <= 200)
+		|| !input_checker(argc, argv))
+	{
+		printf("Wrong input format, try again! Error!\n");
+		return (NULL);
+	}
+	saves = alloc_saves(argv, argc);
+	if (saves->death_time < 1 || saves->sleep_time < 1 || saves->eat_time < 1)
+	{
+		printf("Wrong input format, try again! Error!\n");
+		return (NULL);
+	}
+	saves->philos = malloc(saves->philo_num * sizeof(t_philo));
+	saves->dead = 0;
+	if (!saves->philos)
+		return (NULL);
+	alloc_philos(saves->philos, saves);
+	return (saves);
+}
+
+unsigned long	ft_timestamp(struct timeval sec)
+{
+	struct timeval	now;
+	unsigned long	res;
+
+	gettimeofday(&now, NULL);
+	res = (((now.tv_sec * 1000) + (now.tv_usec / 1000))
+			- ((sec.tv_sec * 1000) + (sec.tv_usec / 1000)));
+	return (res);
 }

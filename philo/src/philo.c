@@ -6,23 +6,11 @@
 /*   By: mmazzocc <mmazzocc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/07 10:41:35 by mmazzocc          #+#    #+#             */
-/*   Updated: 2023/03/07 12:07:28 by mmazzocc         ###   ########.fr       */
+/*   Updated: 2023/03/10 00:43:31 by mmazzocc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../inc/philo.h"
-
-int	case_one(t_struct *saves)
-{
-	saves->start_time = get_time();
-	if (pthread_create(&saves->tid[0], NULL, &routine, &saves->philos[0]))
-		return (error("Failed to create the thred! Error!", saves));
-	pthread_detach(saves->tid[0]);
-	while (saves->dead == 0)
-		usleep(0);
-	ft_exit(saves);
-	return (0);
-}
 
 void	clear_saves(t_struct	*saves)
 {
@@ -32,9 +20,10 @@ void	clear_saves(t_struct	*saves)
 		free(saves->forks);
 	if (saves->philos)
 		free(saves->philos);
+	free(saves);
 }
 
-void	ft_exit(t_struct *saves)
+void	ft_close(t_struct *saves)
 {
 	int	i;
 
@@ -42,35 +31,43 @@ void	ft_exit(t_struct *saves)
 	while (++i < saves->philo_num)
 	{
 		pthread_mutex_destroy(&saves->forks[i]);
-		pthread_mutex_destroy(&saves->philos[i].lock);
+		pthread_mutex_destroy(saves->philos[i].l_fork);
+		pthread_mutex_destroy(saves->philos[i].r_fork);
 	}
-	pthread_mutex_destroy(&saves->write);
-	pthread_mutex_destroy(&saves->lock);
 	clear_saves(saves);
 }
 
-int	error(char *str, t_struct *saves)
+void	*exec_thread(void *saves)
 {
-	printf("%s\n", str);
-	if (saves)
-		ft_exit(saves);
-	return (1);
+	t_philo	*philo;
+
+	philo = (t_philo *)saves;
+	while (!philo->saves->checker_is_run)
+		continue ;
+	if (philo->id % 2 == 0)
+		usleep(1000);
+	routine(philo);
+	return (0);
 }
 
 int	main(int argc, char **argv)
 {
-	t_struct	saves;
+	t_struct	*saves;
+	int			i;
 
-	if (argc < 5 || argc > 6)
-		return (1);
-	if (input_checker(argv))
-		return (1);
-	if (start(&saves, argv, argc))
-		return (1);
-	if (saves.philo_num == 1)
-		return (case_one(&saves));
-	if (thread_init(&saves))
-		return (1);
-	ft_exit(&saves);
+	saves = init_all(argc, argv);
+	if (!saves)
+		return (0);
+	saves->checker_is_run = 1;
+	while (1)
+	{
+		i = -1;
+		while (++i < saves->philo_num)
+		{
+			if (!supervisor(saves->philos, i))
+				return (0);
+		}
+	}
+	ft_close(saves);
 	return (0);
 }
