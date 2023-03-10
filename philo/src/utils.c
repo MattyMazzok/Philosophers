@@ -6,7 +6,7 @@
 /*   By: mmazzocc <mmazzocc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/07 11:04:21 by mmazzocc          #+#    #+#             */
-/*   Updated: 2023/03/10 00:54:08 by mmazzocc         ###   ########.fr       */
+/*   Updated: 2023/03/10 01:45:53 by mmazzocc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,8 +59,8 @@ t_struct	*init_all(int argc, char **argv)
 {
 	t_struct	*saves;
 
-	if (argc < 5 || argc > 6 || !(ft_atoi(argv[1]) >= 1 && ft_atoi(argv[1]) <= 200)
-		|| !input_checker(argc, argv))
+	if (argc < 5 || argc > 6 || !(ft_atoi(argv[1]) >= 1
+			&& ft_atoi(argv[1]) <= 200) || !input_checker(argc, argv))
 	{
 		printf("Wrong input format, try again! Error!\n");
 		return (NULL);
